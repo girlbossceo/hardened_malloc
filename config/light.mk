@@ -1,3 +1,4 @@
+CONFIG_STATIC := false
 CONFIG_WERROR := true
 CONFIG_NATIVE := true
 CONFIG_CXX_ALLOCATOR := true

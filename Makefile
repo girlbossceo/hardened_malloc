@@ -18,10 +18,19 @@ $(shell $(CC) $(if $(filter clang%,$(CC)),-Werror=unknown-warning-option) -E $1 
 endef
 
 CPPFLAGS := $(CPPFLAGS) -D_GNU_SOURCE -I include
-SHARED_FLAGS := -pipe -O3 -flto -fPIC -fvisibility=hidden -fno-plt \
+SHARED_FLAGS := -pipe -O3 -fPIC -fvisibility=hidden -fno-plt \
     -fstack-clash-protection $(call safe_flag,-fcf-protection) -fstack-protector-strong \
     -Wall -Wextra $(call safe_flag,-Wcast-align=strict,-Wcast-align) -Wcast-qual -Wwrite-strings \
     -Wundef
+
+# assume dynamic build if not specified
+ifeq ($(CONFIG_STATIC),)
+    SHARED_FLAGS += -flto
+else ifeq ($(CONFIG_STATIC),false)
+    SHARED_FLAGS += -flto
+else ifeq ($(CC),"gcc")
+    SHARED_FLAGS += -flto
+endif
 
 ifeq ($(CONFIG_WERROR),true)
     SHARED_FLAGS += -Werror
@@ -110,8 +119,15 @@ CPPFLAGS += \
     -DCONFIG_STATS=$(CONFIG_STATS) \
     -DCONFIG_SELF_INIT=$(CONFIG_SELF_INIT)
 
+$(OUT)/libhardened_malloc$(SUFFIX).so: $(OBJECTS)
+
+ifeq ($(CONFIG_STATIC),)
 $(OUT)/libhardened_malloc$(SUFFIX).so: $(OBJECTS) | $(OUT)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
+else ifeq ($(CONFIG_STATIC),false)
+$(OUT)/libhardened_malloc$(SUFFIX).so: $(OBJECTS) | $(OUT)
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
+endif
 
 $(OUT):
 	mkdir -p $(OUT)
