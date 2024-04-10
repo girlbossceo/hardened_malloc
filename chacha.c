@@ -70,7 +70,7 @@ void chacha_keystream_bytes(chacha_ctx *x, u8 *c, u32 bytes) {
         return;
     }
 
-    u8 *ctarget;
+    u8 *ctarget = NULL;
     u8 tmp[64];
 
     u32 j0 = x->input[0];
